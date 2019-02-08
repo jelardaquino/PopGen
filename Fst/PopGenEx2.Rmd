@@ -1,0 +1,87 @@
+---
+title: "PopGen2"
+author: "Jelard Aquino"
+date: "2/7/2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Population Genetics Exercise 2
+# Estimation of Population Genetic Differentiation (Fst)
+
+Fst is a metric of differences between two or more populations derived from differences in allele frequencies between them. In this exercise, we will calculate Fst in a metapopulation of 3 subpopulations with individuals having a polymorphism AT at one genetic locus. 
+
+First, we will generate the data. For this exercise I have created 3 subpopulations with 700,768 individuals having genotypes of AA, AT, or TT. 
+```{r}
+pops <- replicate(3, sample(c("AA", "AT", "TT"), 700768, replace=TRUE), simplify=FALSE)
+
+names(pops)<-paste("pop", 1:3, sep="")
+```
+
+Next, I calculated the frequency of A and the frequency of T in each of the subpopulation.
+```{r}
+p <- lapply(pops, function(x) ((sum(x == "AA")*2) + sum(x == "AT"))/1401536)
+q <- lapply(pops, function(x) ((sum(x == "TT")*2) + sum(x == "AT"))/1401536)
+```
+
+Then, we want to calculate the observed and expected heterozygosities in each population. Observed heterozygosity is the proportion of observed heterozygous genotypes. In the Hardy Weinberg Equilibrium equation, the 2pq represents the expected heterozygosity. 
+
+Calculating observed heterozygosity:
+```{r}
+obs_hetero <- lapply(pops, function(x) ((sum(x == "AT")))/700768)
+```
+
+Before we calculate the expected heterozygosity, let us revisit the Hardy Weinberg Equilibrium equation:
+
+p^2 + q^2 + 2pq =1
+
+If we solve for 2pq, we get the following equation:
+
+2pq = 1 - p^2 - q^2
+
+Now let's calculate the expected heterozygosity:
+```{r}
+two_pq <- 1 - (unlist(p))^2 - (unlist(q))^2
+two_pq
+```
+
+The average frequency of A from each subpopulation can be used to obtain the frequency of A for the metapopulation. The same goes for the average frequency of T. 
+```{r}
+mean(unlist(p))
+mean(unlist(q))
+```
+
+The sum of the averages should equal 1:
+```{r}
+mean(unlist(p)) + mean(unlist(q))
+```
+
+Now we will calculate the heterozygosity indices over subpopulations and the metapopualation.
+
+HS (subpops) = ( (Hexp_pop1*num_inds_pop1) + (..same for pop2) + pop3 ) / metapop size
+
+HS:
+```{r}
+HS <- sum(two_pq*700768)/(700768*3)
+HS
+```
+
+HT (overall) = 2 x pbar x qbar
+```{r}
+HT <- 2*mean(unlist(p))*mean(unlist(q))
+HT
+```
+
+Finally, we can calulate Fst:
+
+FST = (HT-HS)/HT
+FST:
+```{r, echo=TRUE}
+FST <- (HT-HS)/HT
+FST
+```
+
+Fst goes from 0-1, with 0 being no different (identical) and 1 being populations are as different as they can be. In the realistic situation, empiricist never see Fst over 0.2.
